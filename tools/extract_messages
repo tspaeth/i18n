@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Boilerplate: Make it so we can perform relative imports even when run as a script.
+if __name__ == '__main__' and __package__ is None:
+  import os, sys
+  sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+  __package__ = str('tools')
+  import tools
+
+
+import os, sys
+
+import logging
+logger = logging.getLogger(__name__)
+
+class Error(Exception):
+  pass
+
+import sys, os, errno, io, subprocess, re, textwrap
+import collections, functools, itertools
+
+from .pretty_print import pp, pf
+
+from . import message
+from . import pseudo_translation
+from . import message_printer
+
+import lxml.html
+
+
+def set_excepthook():
+  import pdb, sys, traceback
+  def info(type, value, tb):
+    traceback.print_exception(type, value, tb)
+    pdb.pm()
+  sys.excepthook = info
+
+
+msg_printer = message_printer.MessagePrinter()
+
+
+def print_messages(messages):
+  for m in messages:
+    msg_printer.print_message(m)
+    msg_printer.printer.print()
+
+
+def extract_messages_from_html_file(fname):
+  doc = lxml.html.parse(fname)
+  return message.parse_messages(doc.getroot())
+
+
+def main(argv):
+  set_excepthook()
+  SOURCE_HTML_FILENAME = "demo/index.html"
+  assert(len(argv) == 1)
+  logging.basicConfig(level=logging.INFO)
+  messages_map = extract_messages_from_html_file(SOURCE_HTML_FILENAME)
+  messages = list(messages_map.values())
+  logger.info("\n%s", pf(messages))
+  print_messages(messages)
+  # pseudo translate
+  print_messages(map(pseudo_translation.pseudo_translate, messages))
+
+
+
+if __name__ == "__main__":
+  main(sys.argv)

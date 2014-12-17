@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Boilerplate: Make it so we can perform relative imports even when run as a script.
+if __name__ == '__main__' and __package__ is None:
+  import os, sys
+  sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+  __package__ = str('tools')
+  import tools
+
+
+import os, sys
+
+import logging
+logger = logging.getLogger(__name__)
+
+class Error(Exception):
+  pass
+
+import sys, os, errno, io, subprocess, re, textwrap
+import collections, functools, itertools
+from collections import OrderedDict
+
+from .pretty_print import pp, pf
+
+from . import message
+from . import message_printer
+from . import pseudo_translation
+from . import term_styles
+
+msg_printer = message_printer.MessagePrinter()
+term_printer = msg_printer.printer
+
+import lxml.html
+
+
+def node_fromstring(html):
+  html = '<html><body>%s</body></html>' % html
+  doc = lxml.html.document_fromstring(html)
+  return next(e for e in doc if e.tag == 'body')
+
+
+class OnParse(message.OnParseBase):
+  def __init__(self, translated_messages):
+    self._translated_messages = translated_messages
+
+  def on_node(self, message, node):
+    translated_message = self._translated_messages[message.id]
+    translated_html = translated_message.unparse()
+    translated_node = node_fromstring(translated_html)
+    node.text = translated_node.text
+    node[:] = translated_node[:]
+    del node.attrib["i18n"]
+
+  def on_attrib(self, message, node, attr):
+    translated_message = self._translated_messages[message.id]
+    assert(len(translated_message.parts) == 1)
+    node.attrib[attr] = translated_message.parts[0]
+    # TODO: this may not be present for implicitly extracted attributes.
+    del node.attrib["i18n-" + attr]
+
+
+def set_excepthook():
+  import pdb, sys, traceback
+  def info(type, value, tb):
+    traceback.print_exception(type, value, tb)
+    pdb.pm()
+  sys.excepthook = info
+
+
+def print_unparsed_messages(messages):
+  p = term_printer
+  for m in messages.values():
+    p.print("message_id: {0}, unparsed:".format(m.id))
+    with p.indent():
+      p.print(m.unparse())
+
+def main(argv):
+  set_excepthook()
+  SOURCE_HTML_FILENAME = "demo/index.html"
+  DEST_HTML_FILENAME = "demo/index-zz.html"
+  assert(len(argv) == 1)
+  logging.basicConfig(level=logging.INFO)
+  doc = lxml.html.parse(SOURCE_HTML_FILENAME).getroot()
+  messages = message.parse_messages(doc)
+  doc = lxml.html.parse(SOURCE_HTML_FILENAME).getroot()
+  tmp_messages = message.parse_messages(doc)
+  translated_messages = OrderedDict(
+      (k, pseudo_translation.pseudo_translate(v))
+      for (k, v) in tmp_messages.items())
+  doc = lxml.html.parse(SOURCE_HTML_FILENAME).getroot()
+  message.parse_messages(doc, on_parse=OnParse(translated_messages))
+  # print_unparsed_messages(translated_messages)
+  translated_html = lxml.html.tostring(doc, method="html", encoding="unicode")
+  with io.open(DEST_HTML_FILENAME, "wt", encoding="utf-8") as f:
+    f.write(translated_html)
+  print(term_styles.style_html(translated_html))
+
+
+if __name__ == "__main__":
+  main(sys.argv)

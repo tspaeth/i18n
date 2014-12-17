@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+PLATFORM="$(uname -s)"
+
+require_sudo() {
+  # If user can do passwordless sudo, don't ask for password.  (Assumes they
+  # can run any command passwordless.)
+  if [[ "$(sudo -n true 2>&1)" == *password* ]]; then
+    sudo -v -p "This script uses sudo. Please enter the password for %u: "
+  fi
+}
+
+if ! which python3 >/dev/null ; then
+  if [[ "$PLATFORM" == "Linux" ]]; then
+    require_sudo
+    sudo apt-get -y install python3
+  else
+    echo Please install Python 3 and make it available as python3.
+    exit 2
+  fi
+fi
+
+ensure_python_lib() {
+  local LIB=$1
+  if ! python3 -c "import $LIB" 2>/dev/null ; then
+    echo The Python $LIB library is required. Installing ...
+    if [[ "$(uname -a)" == *Ubuntu* ]]; then
+      require_sudo
+      sudo apt-get -y install python3-$LIB
+    else
+      require_sudo
+      sudo easy_install3 $LIB
+    fi
+  fi
+}
+
+for lib in lxml termcolor pygments ; do
+  ensure_python_lib $lib
+done
