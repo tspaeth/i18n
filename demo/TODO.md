@@ -1,0 +1,14 @@
+-   implicit syntax
+    -   labels
+    -   placeholders
+    -   title attributes, etc.
+-   form labels
+-   document title
+-   bidi
+    -   document title can't have spans
+-   messageformat
+    -   pluralization
+    -   gender
+
+-   strict mode errors and warnings
+-   ICU messageformat library
