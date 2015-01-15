@@ -41,6 +41,6 @@ cd i18n
 
 [Angular and Internationalization: The New World]: https://drive.google.com/open?id=1mwyOFsAD-bPoXTk3Hthq0CAcGXCUw-BtTJMR4nGTY-0
 [Angular Public]: https://drive.google.com/folderview?id=0BxgtL8yFJbacQmpCc1NMV3d5dnM
-[Design Docs]: https://drive.google.com/folderview?id=0BxgtL8yFJbacQmpCc1NMV3d5dnM
-[i18n]: https://drive.google.com/folderview?id=0BxgtL8yFJbacQmpCc1NMV3d5dnM
+[Design Docs]: https://drive.google.com/folderview?id=0BxgtL8yFJbacUnUxc3l5aTZrbVk
+[i18n]: https://drive.google.com/folderview?id=0B8aAcQMyRhIWQUxyOXBDeHRPcTg
 [v1.0]: https://drive.google.com/open?id=1-pLAhklbR7CMLkY4pYgwjoDCLyNlNGVnO_lDZiuN9KA
